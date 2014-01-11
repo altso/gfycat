@@ -36,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConversionStatus.cs" />
+    <Compile Include="GifConvert.cs" />
     <Compile Include="GifConverter.cs" />
     <Compile Include="IGifConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

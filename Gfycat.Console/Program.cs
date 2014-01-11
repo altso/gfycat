@@ -28,8 +28,7 @@ namespace Gfycat
 
         private static async Task Run(Uri gifUri)
         {
-            IGifConverter converter = new GifConverter();
-            var uri = await converter.ConvertAsync(gifUri, new Progress<string>(Console.WriteLine), CancellationToken.None);
+            var uri = await GifConvert.ConvertAsync(gifUri, new Progress<string>(Console.WriteLine), CancellationToken.None);
             Console.WriteLine(uri);
             Process.Start(uri.ToString());
         }

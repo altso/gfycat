@@ -22,10 +22,10 @@ namespace Gfycat
             string gifId = CreateRandomString() + ".gif";
 
             progress.Report("initiate");
-            await Initiate(gifId);
+            await Initiate(gifId).ConfigureAwait(false);
 
             progress.Report("transcode release");
-            var uri = await TranscodeRelease(gifId, gifUri);
+            var uri = await TranscodeRelease(gifId, gifUri).ConfigureAwait(false);
             if (uri != null)
             {
                 return uri;
@@ -33,12 +33,12 @@ namespace Gfycat
 
             while (true)
             {
-                var status = await GetStatus(gifId);
+                var status = await GetStatus(gifId).ConfigureAwait(false);
                 var processor = GetProcessor(status);
                 if (processor(status, progress, cancellationToken))
                 {
                     progress.Report("getting the url");
-                    return await TranscodeRelease(gifId, gifUri);
+                    return await TranscodeRelease(gifId, gifUri).ConfigureAwait(false);
                 }
             }
         }
@@ -46,7 +46,7 @@ namespace Gfycat
         private async Task Initiate(string gifId)
         {
             var uriString = string.Format("http://gfycat.com/ajax/initiate/{0}", gifId);
-            var json = await new HttpClient().GetStringAsync(uriString);
+            var json = await new HttpClient().GetStringAsync(uriString).ConfigureAwait(false);
             if (!JsonConvert.DeserializeAnonymousType(json, new { success = true }).success)
             {
                 throw new Exception("Initiate failed.");
@@ -56,7 +56,7 @@ namespace Gfycat
         private async Task<Uri> TranscodeRelease(string gifId, Uri gifUri)
         {
             var uriString = string.Format("http://upload.gfycat.com/transcodeRelease/{0}?immediatePublish=true&fetchUrl={1}", gifId, Uri.EscapeUriString(gifUri.ToString()));
-            var json = await new HttpClient().GetStringAsync(uriString);
+            var json = await new HttpClient().GetStringAsync(uriString).ConfigureAwait(false);
             var result = JsonConvert.DeserializeAnonymousType(json, new
             {
                 isOk = true,
@@ -74,7 +74,7 @@ namespace Gfycat
         {
             var uriString = string.Format("http://tracking.gfycat.com/status/{0}", gifId);
             var client = new HttpClient();
-            var json = await client.GetStringAsync(new Uri(uriString));
+            var json = await client.GetStringAsync(new Uri(uriString)).ConfigureAwait(false);
             return JsonConvert.DeserializeObject<ConversionStatus>(json);
         }
 
@@ -86,6 +86,7 @@ namespace Gfycat
 
         private static bool ProcessComplete(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
         {
+            progress.Report(status.Task);
             return true;
         }
 
