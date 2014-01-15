@@ -1,0 +1,44 @@
+﻿<phone:PhoneApplicationPage x:Class="Gfycat.Samples.WindowsPhone.MainPage"
+                            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                            xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
+                            xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
+                            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                            xmlns:controls="clr-namespace:Gfycat.Controls;assembly=Gfycat.WindowsPhone"
+                            mc:Ignorable="d"
+                            FontFamily="{StaticResource PhoneFontFamilyNormal}"
+                            FontSize="{StaticResource PhoneFontSizeNormal}"
+                            Foreground="{StaticResource PhoneForegroundBrush}"
+                            SupportedOrientations="Portrait"
+                            Orientation="Portrait"
+                            shell:SystemTray.IsVisible="True">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+
+        <StackPanel Margin="12,17,0,28">
+            <TextBlock Text="GFYCAT"
+                       Style="{StaticResource PhoneTextNormalStyle}"
+                       Margin="12,0" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1"
+                    Margin="{StaticResource PhoneHorizontalMargin}">
+            <TextBlock Text="Enter gif url:"
+                       Style="{StaticResource PhoneTextSmallStyle}" />
+            <TextBox x:Name="UrlTextBox"
+                     Text="http://i.imgur.com/66LmvKo.gif" />
+            <Button Click="LoadButton_OnClick"
+                    Content="Load GIF" />
+
+            <controls:GifImage x:Name="GifImage"
+                               Margin="{StaticResource PhoneMargin}" />
+        </StackPanel>
+    </Grid>
+
+</phone:PhoneApplicationPage>
