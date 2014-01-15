@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Gfycat</id>
+    <version>1.0.0-alpha</version>
+    <authors>Alexander Tsoi</authors>
+    <owners>Alexander Tsoi</owners>
+    <licenseUrl>https://github.com/altso/gfycat/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/altso/gfycat</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>.NET proxies for gfycat</description>
+    <releaseNotes>Initial release.</releaseNotes>
+    <copyright>Copyright 2014</copyright>
+    <tags>gif mp4</tags>
+    <dependencies>
+      <dependency id="Microsoft.Bcl.Async" version="1.0.165" />
+      <dependency id="Microsoft.Net.Http" version="2.2.18" />
+      <dependency id="Newtonsoft.Json" version="5.0.8" />
+    </dependencies>
+  </metadata>
+</package>
