@@ -13,19 +13,23 @@ namespace Gfycat
 
         private readonly IDictionary<string, StatusProcessor> _processors = new Dictionary<string, StatusProcessor>(StringComparer.OrdinalIgnoreCase)
         {
-            { "complete", ProcessComplete }
+            { "complete", ProcessComplete },
+            { "error", ProcessError }
         };
-        private readonly Random _random = new Random();
+        private static readonly Random Random = new Random();
 
         public async Task<Uri> ConvertAsync(Uri gifUri, IProgress<string> progress, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             string gifId = CreateRandomString() + ".gif";
 
             progress.Report("initiate");
             await Initiate(gifId).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
 
             progress.Report("transcode release");
             var uri = await TranscodeRelease(gifId, gifUri).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
             if (uri != null)
             {
                 return uri;
@@ -34,6 +38,7 @@ namespace Gfycat
             while (true)
             {
                 var status = await GetStatus(gifId).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
                 var processor = GetProcessor(status);
                 if (processor(status, progress, cancellationToken))
                 {
@@ -60,12 +65,17 @@ namespace Gfycat
             var result = JsonConvert.DeserializeAnonymousType(json, new
             {
                 isOk = true,
-                mp4Url = string.Empty
+                mp4Url = string.Empty,
+                error = string.Empty
             });
             if (result.isOk)
             {
                 // scheduled
                 return null;
+            }
+            if (result.error != null)
+            {
+                throw new Exception(result.error);
             }
             return new Uri(result.mp4Url, UriKind.Absolute);
         }
@@ -90,6 +100,12 @@ namespace Gfycat
             return true;
         }
 
+        private static bool ProcessError(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
+        {
+            progress.Report(status.Task);
+            throw new Exception(status.Error);
+        }
+
         private static bool ProcessUnknown(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
         {
             progress.Report(status.Task);
@@ -102,7 +118,7 @@ namespace Gfycat
             var c = new char[5];
             for (int i = 0; i < c.Length; i++)
             {
-                c[i] = s[(int)Math.Floor(_random.NextDouble() * s.Length)];
+                c[i] = s[(int)Math.Floor(Random.NextDouble() * s.Length)];
             }
             return new string(c);
         }

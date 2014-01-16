@@ -132,16 +132,18 @@ namespace Gfycat.Controls
 
         private async void UpdateSource()
         {
+            if (_media == null) return;
+
+            // cancel previous request
+            if (_cancellationTokenSource != null)
+            {
+                _cancellationTokenSource.Cancel();
+                _cancellationTokenSource.Dispose();
+                _cancellationTokenSource = null;
+            }
+
             if (Source != null)
             {
-                // cancel previous request
-                if (_cancellationTokenSource != null)
-                {
-                    _cancellationTokenSource.Cancel();
-                    _cancellationTokenSource.Dispose();
-                    _cancellationTokenSource = null;
-                }
-
                 _cancellationTokenSource = new CancellationTokenSource();
                 try
                 {
@@ -176,6 +178,8 @@ namespace Gfycat.Controls
 
         private void UpdatePlayback()
         {
+            if (_media == null) return;
+
             if (IsAnimating)
             {
                 _media.Play();
