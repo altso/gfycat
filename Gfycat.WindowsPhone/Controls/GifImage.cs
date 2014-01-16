@@ -12,7 +12,8 @@ namespace Gfycat.Controls
     [TemplateVisualState(Name = "Converting", GroupName = "GifStates")]
     [TemplateVisualState(Name = "Loading", GroupName = "GifStates")]
     [TemplateVisualState(Name = "Playing", GroupName = "GifStates")]
-    [TemplateVisualState(Name = "Paused", GroupName = "GifStates")]
+    [TemplateVisualState(Name = "Stopped", GroupName = "GifStates")]
+    [TemplateVisualState(Name = "Error", GroupName = "GifStates")]
     public class GifImage : Control
     {
         #region Source Property
@@ -46,24 +47,37 @@ namespace Gfycat.Controls
 
         #endregion
 
-        #region IsPaused Property
+        #region IsAnimating Property
 
-        public static readonly DependencyProperty IsPausedProperty =
-            DependencyProperty.Register("IsPaused", typeof(bool), typeof(GifImage), new PropertyMetadata(IsPausedChanged));
+        public static readonly DependencyProperty IsAnimatingProperty =
+            DependencyProperty.Register("IsAnimating", typeof(bool), typeof(GifImage), new PropertyMetadata(IsAnimatingChanged));
 
-        private static void IsPausedChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        private static void IsAnimatingChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             ((GifImage)sender).UpdatePlayback();
         }
 
-        public bool IsPaused
+        public bool IsAnimating
         {
-            get { return (bool)GetValue(IsPausedProperty); }
-            set { SetValue(IsPausedProperty, value); }
+            get { return (bool)GetValue(IsAnimatingProperty); }
+            set { SetValue(IsAnimatingProperty, value); }
         }
 
         #endregion
 
+
+        #region PreviewSource Property
+
+        public ImageSource PreviewSource
+        {
+            get { return (ImageSource)GetValue(PreviewSourceProperty); }
+            set { SetValue(PreviewSourceProperty, value); }
+        }
+
+        public static readonly DependencyProperty PreviewSourceProperty =
+            DependencyProperty.Register("PreviewSource", typeof(ImageSource), typeof(GifImage), new PropertyMetadata(null));
+
+        #endregion
 
         private MediaElement _media;
         private CancellationTokenSource _cancellationTokenSource;
@@ -85,14 +99,14 @@ namespace Gfycat.Controls
             };
             _media.MediaOpened += (sender, args) =>
             {
-                if (IsPaused)
-                {
-                    GoToState("Paused");
-                }
-                else
+                if (IsAnimating)
                 {
                     _media.Play();
                     GoToState("Playing");
+                }
+                else
+                {
+                    GoToState("Stopped");
                 }
             };
             _media.MediaFailed += (sender, args) => GoToState("None");
@@ -108,11 +122,11 @@ namespace Gfycat.Controls
 
             if (_media.CurrentState == MediaElementState.Playing)
             {
-                IsPaused = true;
+                IsAnimating = false;
             }
-            else if (_media.CurrentState == MediaElementState.Paused || _media.CurrentState == MediaElementState.Stopped)
+            else
             {
-                IsPaused = false;
+                IsAnimating = true;
             }
         }
 
@@ -146,25 +160,31 @@ namespace Gfycat.Controls
                 }
                 catch (OperationCanceledException)
                 {
+                    GoToState("None");
+                }
+                catch
+                {
+                    GoToState("Error");
                 }
             }
             else
             {
+                _media.Source = null;
                 GoToState("None");
             }
         }
 
         private void UpdatePlayback()
         {
-            if (IsPaused)
-            {
-                _media.Pause();
-                GoToState("Paused");
-            }
-            else
+            if (IsAnimating)
             {
                 _media.Play();
                 GoToState("Playing");
+            }
+            else
+            {
+                _media.Stop();
+                GoToState("Stopped");
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Media.Imaging;
 
 namespace Gfycat.Samples.WindowsPhone
 {
@@ -12,10 +13,16 @@ namespace Gfycat.Samples.WindowsPhone
 
         }
 
-        private async void LoadButton_OnClick(object sender, RoutedEventArgs e)
+        private void LoadButton_OnClick(object sender, RoutedEventArgs e)
         {
-            var mp4Uri = await GifConvert.ConvertAsync(new Uri(UrlTextBox.Text, UriKind.Absolute));
-            GifImage.Source = mp4Uri;
+            GifImage.PreviewSource = new BitmapImage(new Uri(PreviewTextBox.Text, UriKind.Absolute));
+            GifImage.Source = new Uri(UrlTextBox.Text, UriKind.Absolute);
+        }
+
+        private void ClearButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            GifImage.PreviewSource = null;
+            GifImage.Source = null;
         }
     }
 }

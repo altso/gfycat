@@ -33,10 +33,23 @@
                        Style="{StaticResource PhoneTextSmallStyle}" />
             <TextBox x:Name="UrlTextBox"
                      Text="http://i.imgur.com/66LmvKo.gif" />
-            <Button Click="LoadButton_OnClick"
-                    Content="Load GIF" />
-            <CheckBox IsChecked="{Binding ElementName=GifImage, Path=IsPaused, Mode=TwoWay}"
-                      Content="Is paused" />
+            <TextBlock Text="Enter preview url:"
+                       Style="{StaticResource PhoneTextSmallStyle}" />
+            <TextBox x:Name="PreviewTextBox"
+                     Text="http://i.imgur.com/66LmvKoh.jpg" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Button Click="LoadButton_OnClick"
+                        Content="Load GIF" />
+                <Button Click="ClearButton_OnClick"
+                        Content="Clear"
+                        Grid.Column="1" />
+            </Grid>
+            <CheckBox IsChecked="{Binding ElementName=GifImage, Path=IsAnimating, Mode=TwoWay}"
+                      Content="Is animating" />
 
             <controls:GifImage x:Name="GifImage"
                                Margin="{StaticResource PhoneMargin}" />
