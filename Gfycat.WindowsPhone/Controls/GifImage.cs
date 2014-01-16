@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace Gfycat.Controls
 {
@@ -20,7 +22,7 @@ namespace Gfycat.Controls
 
         private static void SourceChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            ((GifImage)sender).Update();
+            ((GifImage)sender).UpdateSource();
         }
 
         public Uri Source
@@ -44,6 +46,25 @@ namespace Gfycat.Controls
 
         #endregion
 
+        #region IsPaused Property
+
+        public static readonly DependencyProperty IsPausedProperty =
+            DependencyProperty.Register("IsPaused", typeof(bool), typeof(GifImage), new PropertyMetadata(IsPausedChanged));
+
+        private static void IsPausedChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            ((GifImage)sender).UpdatePlayback();
+        }
+
+        public bool IsPaused
+        {
+            get { return (bool)GetValue(IsPausedProperty); }
+            set { SetValue(IsPausedProperty, value); }
+        }
+
+        #endregion
+
+
         private MediaElement _media;
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -62,13 +83,40 @@ namespace Gfycat.Controls
                 _media.Position = TimeSpan.Zero;
                 _media.Play();
             };
-            _media.MediaOpened += (sender, args) => GoToState("Playing");
+            _media.MediaOpened += (sender, args) =>
+            {
+                if (IsPaused)
+                {
+                    GoToState("Paused");
+                }
+                else
+                {
+                    _media.Play();
+                    GoToState("Playing");
+                }
+            };
             _media.MediaFailed += (sender, args) => GoToState("None");
 
-            Update();
+            UpdateSource();
         }
 
-        private async void Update()
+        protected override void OnTap(GestureEventArgs e)
+        {
+            base.OnTap(e);
+
+            if (_media == null) return;
+
+            if (_media.CurrentState == MediaElementState.Playing)
+            {
+                IsPaused = true;
+            }
+            else if (_media.CurrentState == MediaElementState.Paused || _media.CurrentState == MediaElementState.Stopped)
+            {
+                IsPaused = false;
+            }
+        }
+
+        private async void UpdateSource()
         {
             if (Source != null)
             {
@@ -103,6 +151,20 @@ namespace Gfycat.Controls
             else
             {
                 GoToState("None");
+            }
+        }
+
+        private void UpdatePlayback()
+        {
+            if (IsPaused)
+            {
+                _media.Pause();
+                GoToState("Paused");
+            }
+            else
+            {
+                _media.Play();
+                GoToState("Playing");
             }
         }
 

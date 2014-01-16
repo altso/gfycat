@@ -35,6 +35,8 @@
                      Text="http://i.imgur.com/66LmvKo.gif" />
             <Button Click="LoadButton_OnClick"
                     Content="Load GIF" />
+            <CheckBox IsChecked="{Binding ElementName=GifImage, Path=IsPaused, Mode=TwoWay}"
+                      Content="Is paused" />
 
             <controls:GifImage x:Name="GifImage"
                                Margin="{StaticResource PhoneMargin}" />
