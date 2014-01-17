@@ -142,7 +142,7 @@ namespace Gfycat.Controls
                 _cancellationTokenSource = null;
             }
 
-            if (Source != null)
+            if (Source != null && IsAnimating)
             {
                 _cancellationTokenSource = new CancellationTokenSource();
                 try
@@ -180,15 +180,22 @@ namespace Gfycat.Controls
         {
             if (_media == null) return;
 
-            if (IsAnimating)
+            if (_media.Source != null)
             {
-                _media.Play();
-                GoToState("Playing");
+                if (IsAnimating)
+                {
+                    _media.Play();
+                    GoToState("Playing");
+                }
+                else
+                {
+                    _media.Stop();
+                    GoToState("Stopped");
+                }
             }
             else
             {
-                _media.Stop();
-                GoToState("Stopped");
+                UpdateSource();
             }
         }
 
