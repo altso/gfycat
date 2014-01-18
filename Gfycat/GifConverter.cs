@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -11,6 +12,7 @@ namespace Gfycat
     {
         private delegate bool StatusProcessor(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken);
 
+        private static readonly Regex RetryRegex = new Regex(@"Sorry, please wait another (?<timeout>\d+) seconds before your next upload.");
         private readonly IDictionary<string, StatusProcessor> _processors = new Dictionary<string, StatusProcessor>(StringComparer.OrdinalIgnoreCase)
         {
             { "complete", ProcessComplete },
@@ -43,7 +45,7 @@ namespace Gfycat
                 if (processor(status, progress, cancellationToken))
                 {
                     progress.Report("getting the url");
-                    return await TranscodeRelease(gifId, gifUri).ConfigureAwait(false);
+                    return await TranscodeRelease(null, gifUri).ConfigureAwait(false);
                 }
             }
         }
@@ -54,13 +56,13 @@ namespace Gfycat
             var json = await new HttpClient().GetStringAsync(uriString).ConfigureAwait(false);
             if (!JsonConvert.DeserializeAnonymousType(json, new { success = true }).success)
             {
-                throw new Exception("Initiate failed.");
+                throw new GfycatException("Initiate failed.");
             }
         }
 
         private async Task<Uri> TranscodeRelease(string gifId, Uri gifUri)
         {
-            var uriString = string.Format("http://upload.gfycat.com/transcodeRelease/{0}?immediatePublish=true&fetchUrl={1}", gifId, Uri.EscapeUriString(gifUri.ToString()));
+            var uriString = string.Format("http://upload.gfycat.com/transcodeRelease{0}?immediatePublish=true&fetchUrl={1}", gifId != null ? "/" + gifId : null, Uri.EscapeUriString(gifUri.ToString()));
             var json = await new HttpClient().GetStringAsync(uriString).ConfigureAwait(false);
             var result = JsonConvert.DeserializeAnonymousType(json, new
             {
@@ -75,7 +77,7 @@ namespace Gfycat
             }
             if (result.error != null)
             {
-                throw new Exception(result.error);
+                throw new GfycatException(result.error);
             }
             return new Uri(result.mp4Url, UriKind.Absolute);
         }
@@ -103,7 +105,17 @@ namespace Gfycat
         private static bool ProcessError(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
         {
             progress.Report(status.Task);
-            throw new Exception(status.Error);
+            var match = RetryRegex.Match(status.Error);
+            if (match.Success)
+            {
+                var timeout = match.Groups["timeout"].Value;
+
+                throw new GfycatRetryException
+                {
+                    RetryInterval = TimeSpan.FromSeconds(double.Parse(timeout))
+                };
+            }
+            throw new GfycatException(status.Error);
         }
 
         private static bool ProcessUnknown(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)

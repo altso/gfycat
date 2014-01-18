@@ -32,11 +32,11 @@
             <TextBlock Text="Enter gif url:"
                        Style="{StaticResource PhoneTextSmallStyle}" />
             <TextBox x:Name="UrlTextBox"
-                     Text="http://i.imgur.com/66LmvKo.gif" />
+                     Text="http://i.imgur.com/hjcBXPD.gif" />
             <TextBlock Text="Enter preview url:"
                        Style="{StaticResource PhoneTextSmallStyle}" />
             <TextBox x:Name="PreviewTextBox"
-                     Text="http://i.imgur.com/66LmvKoh.jpg" />
+                     Text="http://i.imgur.com/hjcBXPDh.jpg" />
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -65,7 +66,6 @@ namespace Gfycat.Controls
 
         #endregion
 
-
         #region PreviewSource Property
 
         public ImageSource PreviewSource
@@ -120,14 +120,7 @@ namespace Gfycat.Controls
 
             if (_media == null) return;
 
-            if (_media.CurrentState == MediaElementState.Playing)
-            {
-                IsAnimating = false;
-            }
-            else
-            {
-                IsAnimating = true;
-            }
+            IsAnimating = _media.CurrentState != MediaElementState.Playing;
         }
 
         private async void UpdateSource()
@@ -151,7 +144,7 @@ namespace Gfycat.Controls
 
                     ConversionProgress = "waiting";
                     GoToState("Converting");
-                    var gifUri = await GifConvert.ConvertAsync(Source, new Progress<string>(p =>
+                    var gifUri = await ConvertAsync(Source, new Progress<string>(p =>
                     {
                         ConversionProgress = p;
                     }), _cancellationTokenSource.Token);
@@ -202,6 +195,23 @@ namespace Gfycat.Controls
         private void GoToState(string state)
         {
             VisualStateManager.GoToState(this, state, true);
+        }
+
+        private static async Task<Uri> ConvertAsync(Uri gifUri, IProgress<string> progress, CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                GfycatRetryException retryException;
+                try
+                {
+                    return await GifConvert.ConvertAsync(gifUri, progress, cancellationToken);
+                }
+                catch (GfycatRetryException e)
+                {
+                    retryException = e;
+                }
+                await TaskEx.Delay(retryException.RetryInterval, cancellationToken);
+            }
         }
     }
 }

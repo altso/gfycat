@@ -36,6 +36,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConversionStatus.cs" />
+    <Compile Include="GfycatException.cs" />
+    <Compile Include="GfycatRetryException.cs" />
     <Compile Include="GifConvert.cs" />
     <Compile Include="GifConverter.cs" />
     <Compile Include="IGifConverter.cs" />
