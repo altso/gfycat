@@ -197,7 +197,7 @@ namespace Gfycat.Controls
             VisualStateManager.GoToState(this, state, true);
         }
 
-        private static async Task<Uri> ConvertAsync(Uri gifUri, IProgress<string> progress, CancellationToken cancellationToken)
+        private async Task<Uri> ConvertAsync(Uri gifUri, IProgress<string> progress, CancellationToken cancellationToken)
         {
             while (true)
             {
@@ -210,6 +210,7 @@ namespace Gfycat.Controls
                 {
                     retryException = e;
                 }
+                ConversionProgress = "waiting";
                 await TaskEx.Delay(retryException.RetryInterval, cancellationToken);
             }
         }

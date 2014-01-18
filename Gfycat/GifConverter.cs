@@ -10,7 +10,14 @@ namespace Gfycat
 {
     public class GifConverter : IGifConverter
     {
-        private delegate bool StatusProcessor(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken);
+        private delegate string StatusProcessor(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken);
+
+        private static readonly string[] Servers =
+        {
+            "http://zippy.gfycat.com/{0}.{1}",
+            "http://fat.gfycat.com/{0}.{1}",
+            "http://giant.gfycat.com/{0}.{1}"
+        };
 
         private static readonly Regex RetryRegex = new Regex(@"Sorry, please wait another (?<timeout>\d+) seconds before your next upload.");
         private readonly IDictionary<string, StatusProcessor> _processors = new Dictionary<string, StatusProcessor>(StringComparer.OrdinalIgnoreCase)
@@ -42,10 +49,11 @@ namespace Gfycat
                 var status = await GetStatus(gifId).ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
                 var processor = GetProcessor(status);
-                if (processor(status, progress, cancellationToken))
+                var gfyname = processor(status, progress, cancellationToken);
+                if (gfyname != null)
                 {
                     progress.Report("getting the url");
-                    return await TranscodeRelease(null, gifUri).ConfigureAwait(false);
+                    return await GetUri(gfyname).ConfigureAwait(false);
                 }
             }
         }
@@ -96,13 +104,28 @@ namespace Gfycat
             return _processors.TryGetValue(status.Task, out processor) ? processor : ProcessUnknown;
         }
 
-        private static bool ProcessComplete(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
+        private static async Task<Uri> GetUri(string id)
         {
-            progress.Report(status.Task);
-            return true;
+            foreach (var server in Servers)
+            {
+                string url = string.Format(server, id, "mp4");
+                var uri = new Uri(url, UriKind.Absolute);
+                var response = await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
+                if (response.IsSuccessStatusCode)
+                {
+                    return uri;
+                }
+            }
+            throw new GfycatException("Could not find converted file.");
         }
 
-        private static bool ProcessError(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
+        private static string ProcessComplete(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
+        {
+            progress.Report(status.Task);
+            return status.Gfyname;
+        }
+
+        private static string ProcessError(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
         {
             progress.Report(status.Task);
             var match = RetryRegex.Match(status.Error);
@@ -118,10 +141,10 @@ namespace Gfycat
             throw new GfycatException(status.Error);
         }
 
-        private static bool ProcessUnknown(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
+        private static string ProcessUnknown(ConversionStatus status, IProgress<string> progress, CancellationToken cancellationToken)
         {
             progress.Report(status.Task);
-            return false;
+            return null;
         }
 
         private string CreateRandomString()
