@@ -199,7 +199,22 @@ namespace Gfycat.Controls
 
         private async Task<Uri> ConvertAsync(Uri gifUri, IProgress<string> progress, CancellationToken cancellationToken)
         {
-            return await GifConvert.ConvertAsync(gifUri, progress, cancellationToken);
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                GfycatRetryException retryException;
+                try
+                {
+                    return await GifConvert.ConvertAsync(gifUri, progress, cancellationToken);
+                }
+                catch (GfycatRetryException e)
+                {
+                    retryException = e;
+                }
+                ConversionProgress = "waiting";
+                await TaskEx.Delay(retryException.RetryInterval, cancellationToken);
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            return null; // you will never reach this
         }
     }
 }
